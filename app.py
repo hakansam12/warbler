@@ -258,6 +258,43 @@ def delete_user():
     return redirect("/signup")
 
 
+
+@app.route('/users/<int:user_id>/likes', methods=["GET"])
+def show_likes(user_id):
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template('users/likes.html', user=user, likes=user.likes)
+
+
+@app.route('/messages/<int:message_id>/like', methods=['POST'])
+def add_like(message_id):
+    """Toggle a liked message for the currently-logged-in user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    liked_message = Message.query.get_or_404(message_id)
+    if liked_message.user_id == g.user.id:
+        return abort(403)
+
+    user_likes = g.user.likes
+
+    if liked_message in user_likes:
+        g.user.likes = [like for like in user_likes if like != liked_message]
+    else:
+        g.user.likes.append(liked_message)
+
+    db.session.commit()
+
+    return redirect("/")
+
+
+
+
 ##############################################################################
 # Messages routes:
 
